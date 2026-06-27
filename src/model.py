@@ -24,7 +24,7 @@ class SentimentModel:
 
     def predict(self, review: str) -> str:
         """Return the predicted label for a single review string."""
-        return self.pipeline.predict([review])[0]
+        return str(self.pipeline.predict([review])[0])
 
     def save(self, path) -> None:
         """Serialize the pipeline to path, creating parent directories as needed."""
