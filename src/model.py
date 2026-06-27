@@ -5,7 +5,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
-from src.config import MAX_FEATURES, NGRAM_RANGE, CLASS_WEIGHT, MAX_ITER, RANDOM_STATE
+from src.config import MAX_FEATURES, NGRAM_RANGE, CLASS_WEIGHT, MAX_ITER, RANDOM_STATE, STOP_WORDS
 
 
 class SentimentModel:
@@ -14,7 +14,7 @@ class SentimentModel:
     def __init__(self) -> None:
         """Build the sklearn pipeline."""
         self.pipeline = Pipeline([
-            ("tfidf", TfidfVectorizer(max_features=MAX_FEATURES, ngram_range=NGRAM_RANGE)),
+            ("tfidf", TfidfVectorizer(max_features=MAX_FEATURES, ngram_range=NGRAM_RANGE, stop_words=STOP_WORDS)),
             ("clf", LogisticRegression(class_weight=CLASS_WEIGHT, max_iter=MAX_ITER, random_state=RANDOM_STATE)),
         ])
 

@@ -11,6 +11,8 @@ from src.config import MODEL_PATH, RANDOM_STATE, TEST_SIZE
 from src.data_loader import get_data
 from src.model import SentimentModel
 
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+
 try:
     stopwords.words("dutch")
 except LookupError:

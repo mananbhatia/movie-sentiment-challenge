@@ -9,6 +9,7 @@ MODEL_PATH = BASE_DIR / "models" / "sentiment_model.joblib"
 TARGET_LANGUAGE = "nl"
 REVIEWS_COL = "Reviews"
 LABEL_COL = "Label"
+STOP_WORDS = None
 
 # Model hyperparameters
 MAX_FEATURES = 5000

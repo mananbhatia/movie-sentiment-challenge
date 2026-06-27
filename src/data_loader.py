@@ -26,7 +26,7 @@ def drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
 
 def filter_dutch(df: pd.DataFrame) -> pd.DataFrame:
     """Keep only rows whose Reviews column is detected as TARGET_LANGUAGE."""
-    mask = df["Reviews"].apply(safe_detect) == TARGET_LANGUAGE
+    mask = df[REVIEWS_COL].apply(safe_detect) == TARGET_LANGUAGE
     return df[mask]
 
 
@@ -35,4 +35,4 @@ def get_data(path=DATA_PATH) -> tuple[pd.Series, pd.Series]:
     df = load_data(path)
     df = drop_duplicates(df)
     df = filter_dutch(df)
-    return df["Reviews"], df["Label"]
+    return df[REVIEWS_COL], df[LABEL_COL]
