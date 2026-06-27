@@ -1,4 +1,5 @@
 import joblib
+import numpy as np
 from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -29,6 +30,27 @@ class SentimentModel:
         """Serialize the pipeline to path, creating parent directories as needed."""
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(self.pipeline, path)
+
+    def explain(self, review: str, top_n: int = 10) -> list[tuple[str, float]]:
+        """Return the top_n (word, contribution) tuples for words present in the review, sorted by contribution descending."""
+        tfidf = self.pipeline.named_steps["tfidf"]
+        clf = self.pipeline.named_steps["clf"]
+
+        tfidf_matrix = tfidf.transform([review])
+        predicted_label = clf.predict(tfidf_matrix)[0]
+        class_index = list(clf.classes_).index(predicted_label)
+
+        contributions = tfidf_matrix.multiply(clf.coef_[class_index]).toarray()[0]
+
+        feature_names = np.array(tfidf.get_feature_names_out())
+        present = tfidf_matrix.nonzero()[1]
+
+        ranked = sorted(
+            ((feature_names[i], contributions[i]) for i in present),
+            key=lambda x: x[1],
+            reverse=True,
+        )
+        return ranked[:top_n]
 
     @classmethod
     def load(cls, path) -> "SentimentModel":
