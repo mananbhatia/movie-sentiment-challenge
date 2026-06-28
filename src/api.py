@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
-from src.config import MODEL_PATH
+from src.config import MODEL_PATH, TARGET_LANGUAGE
+from src.data_loader import safe_detect
 from src.model import SentimentModel
 
 
@@ -30,6 +31,8 @@ class ClassifyResponse(BaseModel):
 @app.post("/classify", response_model=ClassifyResponse)
 async def classify(body: ClassifyRequest, request: Request) -> ClassifyResponse:
     """Predict the sentiment label for the given review, with optional explanation."""
+    if safe_detect(body.review) != TARGET_LANGUAGE:
+        raise HTTPException(status_code=400, detail="Review must be in Dutch.")
     model = request.app.state.model
     label = model.predict(body.review)
     explanation = model.explain(body.review) if body.explain else None
