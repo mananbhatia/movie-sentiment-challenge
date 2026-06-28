@@ -19,17 +19,21 @@ app = FastAPI(lifespan=lifespan)
 
 class ClassifyRequest(BaseModel):
     review: str
+    explain: bool = False
 
 
 class ClassifyResponse(BaseModel):
     label: str
+    explanation: list[tuple[str, float]] | None = None
 
 
 @app.post("/classify", response_model=ClassifyResponse)
 async def classify(body: ClassifyRequest, request: Request) -> ClassifyResponse:
-    """Predict the sentiment label for the given review."""
-    label = request.app.state.model.predict(body.review)
-    return ClassifyResponse(label=label)
+    """Predict the sentiment label for the given review, with optional explanation."""
+    model = request.app.state.model
+    label = model.predict(body.review)
+    explanation = model.explain(body.review) if body.explain else None
+    return ClassifyResponse(label=label, explanation=explanation)
 
 
 @app.get("/health")
