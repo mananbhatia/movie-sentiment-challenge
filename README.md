@@ -6,33 +6,37 @@ The dataset is a CSV of movie reviews with two columns, `Reviews` and `Label`. O
 
 ## Setup
 
-```bash
-# clone the repo, then:
+A trained model is included, so to run the API you only need the serving dependencies:
+
+​```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-
-# enough to run the API:
 pip install -r requirements.txt
+​```
 
-# everything (training, experiments, tests, notebook):
+For the full environment — training, experiments, tests, and the notebook — install the dev dependencies instead:
+
+​```bash
 pip install -r requirements-dev.txt
-```
+​```
 
-Place the dataset at `data/data.csv` before training. The data folder is gitignored, so the CSV is not committed.
+There are two requirements files on purpose. `requirements.txt` is the lean set needed to *serve* the model, which keeps the Docker image small. `requirements-dev.txt` is the full environment, including MLflow, NLTK, pytest, and the notebook tooling. The Docker image installs only the lean file.
 
-There are two requirements files on purpose. `requirements.txt` is the lean set needed to *serve* the model (FastAPI, scikit-learn, and their runtime dependencies), which keeps the Docker image small. `requirements-dev.txt` is the full environment, including MLflow, NLTK, pytest, and the notebook tooling used for training and experimentation. To train the model or run the experiments and tests, install `requirements-dev.txt`; to only run the API, `requirements.txt` is enough. The Docker image installs only the lean file.
+The dataset is only needed to retrain the model or run the notebook; serving uses the included model. To retrain, place the provided CSV at `data/data.csv` (rename it, or update `DATA_PATH` in `src/config.py`, if your file has a different name). The data folder is gitignored, so the CSV is not committed.
 
 ## Usage
 
 All commands are run from the project root.
 
-**Train the model and log experiments**
+**Train the model and log experiments (optional)**
+
+A trained model is already included, so you can serve the API or run Docker directly without this step. To retrain:
 
 ```bash
 python -m src.train
 ```
 
-This loads the data, runs three tracked experiments, saves the chosen model to `models/sentiment_model.joblib`, and prints a classification report for each run.
+This loads the data, runs three tracked experiments, saves the chosen model to `models/sentiment_model.joblib`, and prints a classification report for each run. The first run also downloads the NLTK Dutch stopwords corpus, which needs internet access.
 
 **Serve the API**
 
@@ -106,7 +110,7 @@ If the review is not Dutch, the endpoint returns `400 Bad Request` with a messag
 ```
 .
 ├── data/                     # input CSV (gitignored)
-├── models/                   # saved model artifact (gitignored)
+├── models/                   # saved model artifact (committed)
 ├── notebooks/
 │   └── exploration.ipynb     # data exploration and modelling experiments
 ├── src/
@@ -139,7 +143,7 @@ If the review is not Dutch, the endpoint returns `400 Bad Request` with a messag
 
 **Explainability.** Because the model is linear, a prediction can be explained directly from the model's own coefficients: each word's contribution is its TF-IDF value multiplied by its coefficient for the predicted class. The API exposes this as an optional field, so a caller who wants to understand *why* a review was classified a certain way can ask for the contributing words, while the default response stays minimal. No additional explainability library is needed.
 
-**Testing.** Two unit tests cover the model class. The first trains the model and checks that predict returns one of the three valid labels. The second saves a trained model to disk, reloads it, and checks that the reloaded model gives the same prediction, which verifies that persistence preserves behaviour and protects the train/serve boundary. The tests use a small in-memory fixture, so they run fast and do not depend on the dataset.
+**Testing.** Two unit tests cover the model class. The first trains the model and checks that `predict` returns one of the three valid labels. The second saves a trained model to disk, reloads it, and checks that the reloaded model gives the same prediction, which verifies that persistence preserves behaviour and protects the train/serve boundary. The tests use a small in-memory fixture, so they run fast and do not depend on the dataset.
 
 ## Results
 
@@ -151,6 +155,6 @@ Removing Dutch stop words raised the Negative class's precision (from 0.53 to 0.
 
 ## Future work
 
-- **Data and model versioning.** Track the dataset and the saved model with DVC so each trained model is tied to an exact data version, complementing the experiment tracking already in MLflow.
+- **Data and model versioning.** The trained model is committed to the repo so the service runs out of the box, which is fine for a small artifact but not how I would handle it at scale. I would version the dataset and model with DVC (or a model registry) so each trained model is tied to an exact data version, rather than relying on git for binaries.
 - **More on the Negative class.** Gather more Negative examples or use stratified cross-validation for a more stable estimate, since the current Negative metrics are based on a small test slice.
 - **Faster language validation.** The API's language check adds a few milliseconds per request; a faster detector (such as fastText) or an optional toggle would reduce that cost in a high-throughput setting.
